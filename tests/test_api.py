@@ -1,5 +1,6 @@
 import time
 from pathlib import Path
+from typing import Any
 
 import jwt
 import pytest
@@ -32,13 +33,14 @@ def token(
     username: str = "student",
     roles: tuple[str, ...] = ("STUDENT",),
     expires_in: int = 3600,
+    client: Any = "angular-workshop",
+    include_client: bool = True,
 ) -> str:
     now = int(time.time())
-    return jwt.encode(
-        {"sub": username, "groups": list(roles), "iat": now, "exp": now + expires_in},
-        private_key,
-        algorithm="RS256",
-    )
+    claims: dict[str, Any] = {"sub": username, "groups": list(roles), "iat": now, "exp": now + expires_in}
+    if include_client:
+        claims["client"] = client
+    return jwt.encode(claims, private_key, algorithm="RS256")
 
 
 def headers(private_key: rsa.RSAPrivateKey, roles: tuple[str, ...] = ("STUDENT",)) -> dict[str, str]:
@@ -105,4 +107,19 @@ def test_rejects_expired_token(auth_context) -> None:
     client, private_key, _ = auth_context
     expired_token = token(private_key, expires_in=-1)
     response = client.get("/api/tasks", headers={"Authorization": f"Bearer {expired_token}"})
+    assert response.status_code == 401
+
+
+def test_rejects_token_without_client_claim(auth_context) -> None:
+    client, private_key, _ = auth_context
+    missing_client_token = token(private_key, include_client=False)
+    response = client.get("/api/tasks", headers={"Authorization": f"Bearer {missing_client_token}"})
+    assert response.status_code == 401
+
+
+@pytest.mark.parametrize("client_claim", ["", 123, None, "other-client"])
+def test_rejects_invalid_client_claim(auth_context, client_claim: Any) -> None:
+    client, private_key, _ = auth_context
+    invalid_client_token = token(private_key, client=client_claim)
+    response = client.get("/api/tasks", headers={"Authorization": f"Bearer {invalid_client_token}"})
     assert response.status_code == 401

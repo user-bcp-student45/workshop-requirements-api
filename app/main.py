@@ -24,16 +24,19 @@ def legacy_identity(request: Request, authorization: str = Header(default="")) -
             token.strip(),
             public_key,
             algorithms=["RS256"],
-            options={"require": ["sub", "groups", "iat", "exp"]},
+            options={"require": ["sub", "client", "groups", "iat", "exp"]},
         )
     except jwt.InvalidTokenError as error:
         raise HTTPException(status_code=401, detail="Invalid token") from error
 
     username = claims.get("sub")
+    client_id = claims.get("client")
     roles = claims.get("groups")
     if (
         not isinstance(username, str)
         or not username
+        or not isinstance(client_id, str)
+        or client_id != "angular-workshop"
         or not isinstance(roles, list)
         or not roles
         or any(not isinstance(role, str) or not role for role in roles)

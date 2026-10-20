@@ -20,6 +20,8 @@ Swagger: `http://localhost:8000/docs`
 
 Configura `AUTH_TOKEN_PUBLIC_KEY_LOCATION` con la ruta del PEM público que corresponde a la clave privada usada por Quarkus para firmar los JWT. La API solo necesita la clave pública.
 
+La API acepta JWT firmados con RS256 que incluyan `sub`, `client`, `groups`, `iat` y `exp`. El unico valor de `client` permitido actualmente es `angular-workshop`.
+
 ## Endpoints
 
 - `GET /api/tasks`
