@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "skills": {
+    "architecture-decision": {
+      "source": "NTTData-Academy/bcp-ai-skill-catalog",
+      "sourceType": "github",
+      "skillPath": "domains/architecture/architecture-decision/SKILL.md",
+      "computedHash": "e6e58a74e59335d367bb97292002ec9839a8ef4dd9db4e0a037bbc894f8d5347"
+    },
+    "discovery-analysis": {
+      "source": "NTTData-Academy/bcp-ai-skill-catalog",
+      "sourceType": "github",
+      "skillPath": "domains/quality/discovery-analysis/SKILL.md",
+      "computedHash": "3914b0a5d35c3141a98c9b5d4631fdfc88c3b78bf4b95dc501c77224dda2bffa"
+    },
+    "issue-implementation": {
+      "source": "NTTData-Academy/bcp-ai-skill-catalog",
+      "sourceType": "github",
+      "skillPath": "domains/quality/issue-implementation/SKILL.md",
+      "computedHash": "d706320eb8a8c51e082c74fa8ae73054318953bf5d3050bddca2836626367161"
+    },
+    "reqflow-definition-of-done": {
+      "source": "NTTData-Academy/bcp-ai-skill-catalog",
+      "sourceType": "github",
+      "skillPath": "domains/review/reqflow-definition-of-done/SKILL.md",
+      "computedHash": "ee34ee3156ca89ddd638f4866ec0c67ff25353069bd617562eb1e0c9acf78772"
+    },
+    "spec-writing": {
+      "source": "NTTData-Academy/bcp-ai-skill-catalog",
+      "sourceType": "github",
+      "skillPath": "domains/specification/spec-writing/SKILL.md",
+      "computedHash": "a2eeee0723f53fd24339858c8a51fb2447525b6db9e8cf7778b6e3f68b039ec2"
+    }
+  }
+}

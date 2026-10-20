@@ -1,29 +1,46 @@
 from __future__ import annotations
 
-import base64
 import os
 import sqlite3
-import time
 from pathlib import Path
 from typing import Any
 
+import jwt
 import urllib3
-from fastapi import Body, Depends, FastAPI, File, Header, HTTPException, Query, UploadFile
+from fastapi import Body, Depends, FastAPI, File, Header, HTTPException, Query, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 
-LEGACY_SECRET = "WORKSHOP_SECRET_2026"
+def legacy_identity(request: Request, authorization: str = Header(default="")) -> dict[str, Any]:
+    public_key = request.app.state.jwt_public_key
+    if public_key is None:
+        raise HTTPException(status_code=503, detail="Token verification is not configured")
 
+    scheme, separator, token = authorization.partition(" ")
+    if not separator or scheme.lower() != "bearer" or not token.strip():
+        raise HTTPException(status_code=401, detail="Invalid token")
 
-def legacy_identity(authorization: str = Header(default="")) -> dict[str, str]:
     try:
-        token = authorization.replace("Bearer ", "")
-        decoded = base64.b64decode(token).decode("utf-8")
-        parts = decoded.split("|")
-        if len(parts) != 4 or parts[3] != LEGACY_SECRET or int(parts[2]) < int(time.time()):
-            raise ValueError("invalid token")
-        return {"username": parts[0], "role": parts[1]}
-    except Exception as error:
-        raise HTTPException(status_code=401, detail="Invalid token: " + str(error)) from error
+        claims = jwt.decode(
+            token.strip(),
+            public_key,
+            algorithms=["RS256"],
+            options={"require": ["sub", "groups", "iat", "exp"]},
+        )
+    except jwt.InvalidTokenError as error:
+        raise HTTPException(status_code=401, detail="Invalid token") from error
+
+    username = claims.get("sub")
+    roles = claims.get("groups")
+    if (
+        not isinstance(username, str)
+        or not username
+        or not isinstance(roles, list)
+        or not roles
+        or any(not isinstance(role, str) or not role for role in roles)
+    ):
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+    return {"username": username, "roles": roles}
 
 
 def create_app(db_path: str | None = None, upload_dir: str | None = None) -> FastAPI:
@@ -45,6 +62,10 @@ def create_app(db_path: str | None = None, upload_dir: str | None = None) -> Fas
     app = FastAPI(title="Workshop Requirements API", version="0.1.0")
     app.state.connection = connection
     app.state.upload_dir = selected_uploads
+    public_key_location = os.getenv("AUTH_TOKEN_PUBLIC_KEY_LOCATION")
+    app.state.jwt_public_key = (
+        Path(public_key_location).read_text(encoding="utf-8") if public_key_location else None
+    )
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],
